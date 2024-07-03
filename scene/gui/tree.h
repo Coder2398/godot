@@ -133,11 +133,9 @@ private:
 	int custom_min_height = 0;
 
 	TreeItem *parent = nullptr; // parent item
-	TreeItem *prev = nullptr; // previous in list
-	TreeItem *next = nullptr; // next in list
-	TreeItem *first_child = nullptr;
+	Vector<TreeItem *> children;
+	
 
-	Vector<TreeItem *> children_cache;
 	bool is_root = false; // for tree root
 	Tree *tree = nullptr; // tree (for reference)
 
@@ -152,32 +150,11 @@ private:
 
 	void _change_tree(Tree *p_tree);
 
-	_FORCE_INLINE_ void _create_children_cache() {
-		if (children_cache.is_empty()) {
-			TreeItem *c = first_child;
-			while (c) {
-				children_cache.append(c);
-				c = c->next;
-			}
-		}
-	}
-
 	_FORCE_INLINE_ void _unlink_from_tree() {
-		TreeItem *p = get_prev();
-		if (p) {
-			p->next = next;
+		if (parent == nullptr) {
+			return;
 		}
-		if (next) {
-			next->prev = p;
-		}
-		if (parent) {
-			if (!parent->children_cache.is_empty()) {
-				parent->children_cache.remove_at(get_index());
-			}
-			if (parent->first_child == this) {
-				parent->first_child = next;
-			}
-		}
+		parent->children.remove_at(get_index());
 	}
 
 	bool _is_any_collapsed(bool p_only_visible);
@@ -360,7 +337,7 @@ public:
 	Tree *get_tree() const;
 
 	TreeItem *get_prev();
-	TreeItem *get_next() const;
+	TreeItem *get_next();
 	TreeItem *get_parent() const;
 	TreeItem *get_first_child() const;
 
@@ -376,13 +353,6 @@ public:
 	TypedArray<TreeItem> get_children();
 	void clear_children();
 	int get_index();
-
-#ifdef DEV_ENABLED
-	// This debugging code can be removed once the current refactoring of this class is complete.
-	void validate_cache() const;
-#else
-	void validate_cache() const {}
-#endif
 
 	void move_before(TreeItem *p_item);
 	void move_after(TreeItem *p_item);
